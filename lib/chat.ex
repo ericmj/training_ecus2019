@@ -1,18 +1,23 @@
 defmodule Chat do
-  @moduledoc """
-  Documentation for Chat.
-  """
+  def start do
+    {host, port} = get_host_and_port()
+    IO.inspect(host)
+    IO.inspect(port)
+  end
 
-  @doc """
-  Hello world.
+  defp get_host_and_port do
+    address = String.trim(IO.gets("Server address (localhost:4000): "))
 
-  ## Examples
+    address =
+      if address == "" do
+        "localhost:4000"
+      else
+        address
+      end
 
-      iex> Chat.hello()
-      :world
+    [host, port] = String.split(address, ":")
+    port = String.to_integer(port)
 
-  """
-  def hello do
-    :world
+    {host, port}
   end
 end
