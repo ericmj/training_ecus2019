@@ -29,14 +29,15 @@ defmodule Chat do
   defp loop(socket, nickname) do
     receive do
       {:gets, message} ->
-        IO.puts("#{nickname}: #{message}")
+        payload = %{"kind" => "broadcast", "nickname" => nickname, "message" => message}
+        :ok = :gen_tcp.send(socket, Jason.encode!(payload))
         spawn_gets_process(nickname)
         loop(socket, nickname)
 
       {:tcp, ^socket, data} ->
         data
         |> Jason.decode!()
-        |> handle_message()
+        |> handle_message(nickname)
 
         loop(socket, nickname)
 
@@ -48,7 +49,7 @@ defmodule Chat do
     end
   end
 
-  defp handle_message(%{"kind" => "welcome", "users_online" => num_users})
+  defp handle_message(%{"kind" => "welcome", "users_online" => num_users}, _nickname)
        when is_integer(num_users) do
     IO.puts(
       "Welcome to the ElixirConf server, there are #{num_users} " <>
@@ -56,7 +57,21 @@ defmodule Chat do
     )
   end
 
-  defp handle_message(unknown_message) do
+  defp handle_message(
+         %{"kind" => "broadcast", "message" => _message, "nickname" => nickname},
+         nickname
+       ) do
+    :ok
+  end
+
+  defp handle_message(
+         %{"kind" => "broadcast", "message" => message, "nickname" => nickname},
+         _nickname
+       ) do
+    IO.puts("#{nickname}: #{message}")
+  end
+
+  defp handle_message(unknown_message, _nickname) do
     IO.puts("Received unknown message: #{inspect(unknown_message)}")
   end
 
