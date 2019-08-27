@@ -1,8 +1,15 @@
 defmodule Chat do
-  def start do
+  def start() do
     {host, port} = get_host_and_port()
-    IO.inspect(host)
-    IO.inspect(port)
+    options = [mode: :binary, active: true, packet: 2]
+    {:ok, socket} = :gen_tcp.connect(String.to_charlist(host), port, options)
+
+    receive do
+      {:tcp, ^socket, data} ->
+        data
+        |> Jason.decode!()
+        |> IO.inspect()
+    end
   end
 
   defp get_host_and_port do
