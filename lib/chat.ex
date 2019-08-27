@@ -6,21 +6,39 @@ defmodule Chat do
     case :gen_tcp.connect(String.to_charlist(host), port, options) do
       {:ok, socket} ->
         IO.puts("Connection successful")
-        loop(socket)
+
+        nickname = String.trim(IO.gets("Nickname: "))
+        spawn_gets_process(nickname)
+
+        loop(socket, nickname)
 
       {:error, reason} ->
         raise "Failed to open connection: #{inspect(reason)}"
     end
   end
 
-  defp loop(socket) do
+  defp spawn_gets_process(nickname) do
+    parent = self()
+
+    spawn(fn ->
+      message = String.trim(IO.gets("#{nickname}: "))
+      send(parent, {:gets, message})
+    end)
+  end
+
+  defp loop(socket, nickname) do
     receive do
+      {:gets, message} ->
+        IO.puts("#{nickname}: #{message}")
+        spawn_gets_process(nickname)
+        loop(socket, nickname)
+
       {:tcp, ^socket, data} ->
         data
         |> Jason.decode!()
         |> handle_message()
 
-        loop(socket)
+        loop(socket, nickname)
 
       {:tcp_closed, ^socket} ->
         raise "TCP connection was closed"
@@ -58,6 +76,9 @@ defmodule Chat do
     {host, port}
   end
 
-  # git diff origin/master
+  # To compare your code:
+  # git fetch && git diff origin/master
+
+  # To catch up with our code:
   # git fetch && git reset --hard origin/master
 end
