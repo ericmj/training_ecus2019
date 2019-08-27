@@ -57,10 +57,7 @@ defmodule Chat do
     )
   end
 
-  defp handle_message(
-         %{"kind" => "broadcast", "message" => _message, "nickname" => nickname},
-         nickname
-       ) do
+  defp handle_message(%{"kind" => "broadcast", "nickname" => nickname}, nickname) do
     :ok
   end
 
